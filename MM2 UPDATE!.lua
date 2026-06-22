@@ -1,10 +1,19 @@
--- [[ ==================================================
+-- ███████████████████████████████████████████████████████████████████████████
+--  ✦  CGS · DIAMOND EDITION  ·  v25.1  ✦  (MEJORADO)
+--  ──────────────────────────────────────────────────────────────────────────
+--  "Código que brilla en la oscuridad del servidor, sin perder ni un átomo."
+--  Desarrollado por:  Company Gamer Studios
+--  Filosofía:  Transparencia, velocidad, y un toque de locura cuántica.
+-- ███████████████████████████████████████████████████████████████████████████
+
+--[[ ==================================================
 -- MEGA SCRIPT MM2 V23.0 - CGS ELITE EDITION
 -- STATUS: FULLY RECOVERED + CGS DYNAMIC ADMIN UPDATE
 -- DEVELOPED BY: COMPANY GAMER STUDIOS
 -- ================================================== ]]
 
-local Settings = {
+local Cosmos = {
+    --  GEMAS DE ACTIVACIÓN  (todas brillan en falso por defecto)
     SilentAim = false,
     UseCameraAimbot = false,
     TriggerBot = false,
@@ -14,12 +23,12 @@ local Settings = {
     FakeLag = false,
     ServerLag = false,
 
-    -- Nuevas funciones de Fling
+    --  Nuevas funciones de Fling  (destellos de energía)
     SpeedGlitch = false,
     FlingSheriff = false,
     FlingMurder = false,
 
-    -- Configuración de Teclas
+    --  TECLADO SAGRADO  (configuración de teclas)
     CameraAimbotKey = Enum.KeyCode.X,
     SilentAimKey = Enum.KeyCode.B,
     TriggerKey = Enum.KeyCode.P,
@@ -32,21 +41,28 @@ local Settings = {
     SpeedGlitchKey = Enum.KeyCode.Q,
     FlingSheriffKey = Enum.KeyCode.N,
     FlingMurderKey = Enum.KeyCode.G,
-    
-    -- TELEPORT KEYS CORREGIDAS
-    MapKey = Enum.KeyCode.U,      -- U para ir al MAPA  
-    LobbyKey = Enum.KeyCode.L,    -- L para ir al LOBBY
+
+    --  TELEPORT KEYS CORREGIDAS
+    MapKey = Enum.KeyCode.U,      --  U para ir al MAPA
+    LobbyKey = Enum.KeyCode.L,    --  L para ir al LOBBY
     AdminKey = Enum.KeyCode.J,
 
-    -- Variables de Ajuste
+    --  Variables de Ajuste  (tallado de diamante)  ✦ MEJORA CGS: valores documentados
     GrabHeight = 3,
     AuraRange = 25,
     AuraDelay = 0.035,
     ChestOffset = 1.65,
     ShootRange = 100,
+    -- Nuevos parámetros para optimización y control
+    ESPUpdateInterval = 0.2,      -- segundos entre actualizaciones del ESP
+    MaxFlingDuration = 0.5,       -- duración máxima del fling
+    FakeLagChance = 3,            -- 1 de cada 3 iteraciones
+    SpeedMultiplier = 1.48,
+    AutoShootCooldown = 0.07,
+    TeleportOffset = 3,           -- distancia detrás del objetivo
 }
 
--- [ SERVICIOS ]
+-- [ SERVICIOS DEL UNIVERSO ]
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -54,7 +70,7 @@ local StarterGui = game:GetService("StarterGui")
 local Workspace = game.Workspace
 local CoreGui = game:GetService("CoreGui")
 
--- [ VARIABLES LOCALES ]
+-- [ VARIABLES DE LA MATRIX ]
 local LocalPlayer = Players.LocalPlayer
 local Camera = Workspace.CurrentCamera
 
@@ -69,8 +85,12 @@ local FakeLagConnection = nil
 local ServerLagConnection = nil
 local SpeedGlitchConnection = nil
 
+-- ✦ MEJORA CGS: variables para optimización ESP
+local ESPLastUpdate = 0
+local ESPCache = {}  -- guarda el último estado de cada jugador para evitar actualizaciones innecesarias
+
 -- ==================================================
--- [ NOTIFICACIONES ]
+-- [ NOTIFICACIONES  (mensajes de luz) ]
 -- ==================================================
 local function ShowNotification(title, text)
     StarterGui:SetCore("SendNotification", {
@@ -81,12 +101,12 @@ local function ShowNotification(title, text)
 end
 
 -- ==================================================
--- [ LIMPIADOR DE RONDA ]
+-- [ LIMPIADOR DE RONDA  (reset cósmico) ]
 -- ==================================================
 local function FullReset()
     SheriffID = nil
     RoundStarted = false
- 
+
     for player, ruby in pairs(Rubies) do
         if ruby then
             if ruby.Parent then
@@ -94,8 +114,9 @@ local function FullReset()
             end
         end
     end
-    
+
     Rubies = {}
+    ESPCache = {}  -- ✦ MEJORA CGS: limpiar caché
     print("[CGS] FULL RESET COMPLETO - Nueva ronda detectada")
 end
 
@@ -114,58 +135,106 @@ LocalPlayer.CharacterAdded:Connect(function()
 end)
 
 -- ==================================================
--- [ SISTEMA ESP RUBY ]
+-- [ SISTEMA ESP RUBY  (marcadores de alma) ]  ✦ MEJORA CGS: lógica de roles actualizada
 -- ==================================================
 local function GetRoleColor(player)
-    if not player.Character then 
-        return Color3.new(0, 1, 0), 0.45 
+    if not player.Character then
+        return Color3.new(0, 1, 0), 0.45  -- inocente por defecto
     end
-    
+
     local char = player.Character
     local backpack = player:FindFirstChild("Backpack") or player.Backpack
-    
-    local hasKnife = backpack:FindFirstChild("Knife") 
+
+    -- Detectar arma (cuchillo o pistola) en el personaje o mochila
+    local hasKnife = backpack:FindFirstChild("Knife")
                    or backpack:FindFirstChild("KnifeClone")
-                   or char:FindFirstChild("Knife") 
+                   or char:FindFirstChild("Knife")
                    or char:FindFirstChild("KnifeClone")
-                   
-    local hasGun = backpack:FindFirstChild("Gun") 
+
+    local hasGun = backpack:FindFirstChild("Gun")
                 or backpack:FindFirstChild("Revolver")
-                or char:FindFirstChild("Gun") 
+                or char:FindFirstChild("Gun")
                 or char:FindFirstChild("Revolver")
-                
+
+    -- Lógica de roles según la descripción actualizada
     if hasKnife then
+        -- ASESINO (murderer)
         return Color3.new(1, 0, 0), 0.25
     elseif hasGun then
+        -- SHERIFF (el que tiene pistola)
         if not RoundStarted then
             RoundStarted = true
             SheriffID = player.UserId
         end
-        
+        -- Si es el sheriff, azul; si es un inocente que recogió un arma, amarillo (pero eso se maneja más abajo)
         if player.UserId == SheriffID then
-            return Color3.fromRGB(0, 150, 255), 0.2
+            return Color3.fromRGB(0, 150, 255), 0.2  -- sheriff
         else
+            -- Inocente con arma (recogió la pistola del sheriff caído)
             return Color3.fromRGB(255, 255, 0), 0.25
         end
     else
+        -- INOCENTE (sin armas)
         return Color3.new(0, 1, 0), 0.4
     end
 end
 
+-- ✦ MEJORA CGS: función para determinar el rol de un jugador (devuelve "murderer", "sheriff", "innocent", "innocent_with_gun")
+local function GetPlayerRole(player)
+    if not player.Character then return "innocent" end
+    local char = player.Character
+    local backpack = player:FindFirstChild("Backpack") or player.Backpack
+
+    local hasKnife = backpack:FindFirstChild("Knife") or backpack:FindFirstChild("KnifeClone") or char:FindFirstChild("Knife") or char:FindFirstChild("KnifeClone")
+    local hasGun = backpack:FindFirstChild("Gun") or backpack:FindFirstChild("Revolver") or char:FindFirstChild("Gun") or char:FindFirstChild("Revolver")
+
+    if hasKnife then
+        return "murderer"
+    elseif hasGun then
+        -- Si el jugador tiene pistola, verificar si es el sheriff oficial
+        if player.UserId == SheriffID then
+            return "sheriff"
+        else
+            -- Si no hay SheriffID definido, asignar al primer jugador con pistola como sheriff
+            if not SheriffID then
+                SheriffID = player.UserId
+                RoundStarted = true
+                return "sheriff"
+            else
+                return "innocent_with_gun"  -- Inocente que recogió un arma
+            end
+        end
+    else
+        return "innocent"
+    end
+end
+
+-- ✦ MEJORA CGS: función para obtener al asesino (más eficiente)
+local function GetMurderer()
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character then
+            if GetPlayerRole(p) == "murderer" then
+                return p.Character
+            end
+        end
+    end
+    return nil
+end
+
 local function CreateOrUpdateRuby(player)
-    if player == LocalPlayer then 
-        return 
+    if player == LocalPlayer then
+        return
     end
-    
-    if not player.Character then 
-        return 
+
+    if not player.Character then
+        return
     end
-    
+
     local root = player.Character:FindFirstChild("HumanoidRootPart")
-    if not root then 
-        return 
+    if not root then
+        return
     end
-    
+
     local ruby = Rubies[player] or Instance.new("BoxHandleAdornment")
     ruby.Name = "CGS_Ruby"
     ruby.Size = Vector3.new(0.92, 0.92, 0.92)
@@ -173,16 +242,16 @@ local function CreateOrUpdateRuby(player)
     ruby.ZIndex = 5
     ruby.Adornee = root
     ruby.Parent = root
-    
+
     Rubies[player] = ruby
-    
+
     local color, trans = GetRoleColor(player)
     ruby.Color3 = color
     ruby.Transparency = trans
 end
 
 -- ==================================================
--- [ GUN HIGHLIGHT ]
+-- [ GUN HIGHLIGHT  (resplandor de pistolas caídas) ]
 -- ==================================================
 local function SetupGunHighlight()
     Workspace.DescendantAdded:Connect(function(v)
@@ -200,43 +269,43 @@ local function SetupGunHighlight()
 end
 
 -- ==================================================
--- [ FAKE LAG (K) ]
+-- [ FAKE LAG (K)  -  distorsión temporal ]
 -- ==================================================
 local function ToggleFakeLag()
-    Settings.FakeLag = not Settings.FakeLag
-    
-    if Settings.FakeLag then
+    Cosmos.FakeLag = not Cosmos.FakeLag
+
+    if Cosmos.FakeLag then
         ShowNotification("⏳ Fake Lag", "✅ Activado")
         FakeLagConnection = RunService.Heartbeat:Connect(function()
-            if not Settings.FakeLag then return end
+            if not Cosmos.FakeLag then return end
             if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
-            
+
             local root = LocalPlayer.Character.HumanoidRootPart
-            if math.random(1, 3) == 1 then
+            if math.random(1, Cosmos.FakeLagChance) == 1 then  -- ✦ MEJORA CGS: uso de constante
                 root.AssemblyLinearVelocity = Vector3.new(0, root.AssemblyLinearVelocity.Y, 0)
             end
         end)
     else
-        if FakeLagConnection then 
-            FakeLagConnection:Disconnect() 
-            FakeLagConnection = nil 
+        if FakeLagConnection then
+            FakeLagConnection:Disconnect()
+            FakeLagConnection = nil
         end
         ShowNotification("⏳ Fake Lag", "❌ Desactivado")
     end
 end
 
 -- ==================================================
--- [ SERVER LAG (R) ]
+-- [ SERVER LAG (R)  -  caos en la red ]
 -- ==================================================
 local function ToggleServerLag()
-    Settings.ServerLag = not Settings.ServerLag
-    
-    if Settings.ServerLag then
+    Cosmos.ServerLag = not Cosmos.ServerLag
+
+    if Cosmos.ServerLag then
         ShowNotification("🌐 Server Lag", "✅ Activado (MÁXIMO AGRESIVO)")
         ServerLagConnection = RunService.Heartbeat:Connect(function()
-            if not Settings.ServerLag then return end
+            if not Cosmos.ServerLag then return end
             if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
-            
+
             pcall(function()
                 local root = LocalPlayer.Character.HumanoidRootPart
                 root:SetNetworkOwner(nil)
@@ -250,118 +319,103 @@ local function ToggleServerLag()
             end)
         end)
     else
-        if ServerLagConnection then 
-            ServerLagConnection:Disconnect() 
-            ServerLagConnection = nil 
+        if ServerLagConnection then
+            ServerLagConnection:Disconnect()
+            ServerLagConnection = nil
         end
         ShowNotification("🌐 Server Lag", "❌ Desactivado")
     end
 end
 
 -- ==================================================
--- [ SPEED GLITCH (Q) ]
+-- [ SPEED GLITCH (Q)  -  velocidad cuántica ]
 -- ==================================================
 local function ToggleSpeedGlitch()
-    Settings.SpeedGlitch = not Settings.SpeedGlitch
-    
-    if Settings.SpeedGlitch then
+    Cosmos.SpeedGlitch = not Cosmos.SpeedGlitch
+
+    if Cosmos.SpeedGlitch then
         ShowNotification("⚡ Speed Glitch", "✅ Activado (Q)")
         SpeedGlitchConnection = RunService.Heartbeat:Connect(function()
-            if not Settings.SpeedGlitch then return end
-            
+            if not Cosmos.SpeedGlitch then return end
+
             if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
                 local root = LocalPlayer.Character.HumanoidRootPart
                 local vel = root.AssemblyLinearVelocity
-                root.AssemblyLinearVelocity = Vector3.new(vel.X * 1.48, vel.Y, vel.Z * 1.48)
+                root.AssemblyLinearVelocity = Vector3.new(vel.X * Cosmos.SpeedMultiplier, vel.Y, vel.Z * Cosmos.SpeedMultiplier)  -- ✦ MEJORA CGS
             end
         end)
     else
-        if SpeedGlitchConnection then 
-            SpeedGlitchConnection:Disconnect() 
-            SpeedGlitchConnection = nil 
+        if SpeedGlitchConnection then
+            SpeedGlitchConnection:Disconnect()
+            SpeedGlitchConnection = nil
         end
         ShowNotification("⚡ Speed Glitch", "❌ Desactivado")
     end
 end
 
 -- ==================================================
--- [ FLING NINJA FLASH (N) - SHERIFF ]
+-- [ FLING NINJA FLASH (N) - SHERIFF  (golpe de energía) ]  ✦ MEJORA CGS: unificado con función auxiliar
 -- ==================================================
-local function ToggleFlingSheriff()
+local function ExecuteTargetFling(targetPlayer, roleFilter)
     local char = LocalPlayer.Character
     local myRoot = char and char:FindFirstChild("HumanoidRootPart")
-    
-    if myRoot then
-        local OldCF = myRoot.CFrame 
-        
-        for _, p in pairs(Players:GetPlayers()) do
-            if p ~= LocalPlayer and p.Character then
-                local targetRoot = p.Character:FindFirstChild("HumanoidRootPart")
-                
-                local isSheriff = p.Backpack:FindFirstChild("Gun") 
-                               or p.Character:FindFirstChild("Gun") 
-                               or p.Backpack:FindFirstChild("Revolver") 
-                               or p.Character:FindFirstChild("Revolver")
-                               
-                if isSheriff and targetRoot then
-                    ShowNotification("⚡ FLASH CGS", "🎯 ELIMINANDO SHERIFF...")
-                    myRoot.AssemblyAngularVelocity = Vector3.new(0, 999999, 0)
-                    
-                    local startTime = tick()
-                    while tick() - startTime < 0.4 do
-                        myRoot.CFrame = targetRoot.CFrame * CFrame.Angles(0, math.rad(tick()*12000), 0) * CFrame.new(0.6, 0, 0.6)
-                        myRoot.AssemblyLinearVelocity = Vector3.new(25000, 50, 25000)
-                        task.wait()
-                        if not targetRoot or not targetRoot.Parent then break end
-                    end
-                    
-                    myRoot.CFrame = OldCF
-                    myRoot.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-                    myRoot.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
-                    return 
-                end
-            end
+    local targetChar = targetPlayer.Character
+    local targetRoot = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
+
+    if not myRoot or not targetRoot then
+        ShowNotification("⚠️ Error", "El objetivo no está disponible.")
+        return
+    end
+
+    -- Verificar que el objetivo tenga el rol deseado (si se especifica)
+    if roleFilter then
+        local role = GetPlayerRole(targetPlayer)
+        if role ~= roleFilter then
+            ShowNotification("⚠️ Error", "El jugador no es " .. roleFilter)
+            return
         end
     end
+
+    ShowNotification("⚡ CGS ELITE FLING", "🎯 Atacando a: " .. targetPlayer.Name)
+    local OldCF = myRoot.CFrame
+
+    myRoot.AssemblyAngularVelocity = Vector3.new(0, 999999, 0)
+
+    local startTime = tick()
+    while tick() - startTime < Cosmos.MaxFlingDuration do
+        myRoot.CFrame = targetRoot.CFrame * CFrame.new(0, 0, 0)
+        myRoot.AssemblyLinearVelocity = Vector3.new(30000, 30000, 30000)
+        task.wait()
+        if not targetRoot or not targetRoot.Parent then break end
+    end
+
+    myRoot.CFrame = OldCF
+    myRoot.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+    myRoot.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
 end
 
--- ==================================================
--- [ FLING NINJA FLASH (G) - MURDER ]
--- ==================================================
-local function ToggleFlingMurder()
-    local char = LocalPlayer.Character
-    local myRoot = char and char:FindFirstChild("HumanoidRootPart")
-    
-    if myRoot then
-        local OldCF = myRoot.CFrame 
-        
-        for _, p in pairs(Players:GetPlayers()) do
-            if p ~= LocalPlayer and p.Character then
-                local targetRoot = p.Character:FindFirstChild("HumanoidRootPart")
-                
-                local isMurder = p.Backpack:FindFirstChild("Knife") 
-                               or p.Character:FindFirstChild("Knife") 
-                               
-                if isMurder and targetRoot then
-                    ShowNotification("⚡ FLASH CGS", "🎯 ELIMINANDO MURDER...")
-                    myRoot.AssemblyAngularVelocity = Vector3.new(0, 999999, 0)
-                    
-                    local startTime = tick()
-                    while tick() - startTime < 0.4 do
-                        myRoot.CFrame = targetRoot.CFrame * CFrame.Angles(0, math.rad(tick()*12000), 0) * CFrame.new(0.6, 0, 0.6)
-                        myRoot.AssemblyLinearVelocity = Vector3.new(25000, 50, 25000)
-                        task.wait()
-                        if not targetRoot or not targetRoot.Parent then break end
-                    end
-                    
-                    myRoot.CFrame = OldCF
-                    myRoot.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-                    myRoot.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
-                    return 
-                end
+local function ToggleFlingSheriff()
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character then
+            if GetPlayerRole(p) == "sheriff" then
+                ExecuteTargetFling(p, "sheriff")
+                return
             end
         end
     end
+    ShowNotification("⚠️ Error", "No se encontró sheriff.")
+end
+
+local function ToggleFlingMurder()
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character then
+            if GetPlayerRole(p) == "murderer" then
+                ExecuteTargetFling(p, "murderer")
+                return
+            end
+        end
+    end
+    ShowNotification("⚠️ Error", "No se encontró asesino.")
 end
 
 -- ==================================================
@@ -369,15 +423,15 @@ end
 -- ==================================================
 UserInputService.InputBegan:Connect(function(input, gp)
     if gp then return end
-    
+
     -- Agarrar Pistola (Z)
-    if input.KeyCode == Settings.GrabKey then
+    if input.KeyCode == Cosmos.GrabKey then
         for _, v in pairs(Workspace:GetDescendants()) do
             if v.Name == "GunDrop" and v:IsA("BasePart") then
                 local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
                 if root then
                     local old = root.CFrame
-                    root.CFrame = v.CFrame * CFrame.new(0, Settings.GrabHeight, 0)
+                    root.CFrame = v.CFrame * CFrame.new(0, Cosmos.GrabHeight, 0)
                     task.wait(0.15)
                     root.CFrame = old
                 end
@@ -385,47 +439,47 @@ UserInputService.InputBegan:Connect(function(input, gp)
             end
         end
     end
-    
+
     -- Camera Aimbot (X)
-    if input.KeyCode == Settings.CameraAimbotKey then
-        Settings.UseCameraAimbot = not Settings.UseCameraAimbot
-        ShowNotification("🎯 Camera Aimbot", Settings.UseCameraAimbot and "✅ Activado" or "❌ Desactivado")
+    if input.KeyCode == Cosmos.CameraAimbotKey then
+        Cosmos.UseCameraAimbot = not Cosmos.UseCameraAimbot
+        ShowNotification("🎯 Camera Aimbot", Cosmos.UseCameraAimbot and "✅ Activado" or "❌ Desactivado")
     end
-    
+
     -- Silent Aim (B)
-    if input.KeyCode == Settings.SilentAimKey then
-        Settings.SilentAim = not Settings.SilentAim
-        ShowNotification("🔇 Silent Aim", Settings.SilentAim and "✅ Activado" or "❌ Desactivado")
+    if input.KeyCode == Cosmos.SilentAimKey then
+        Cosmos.SilentAim = not Cosmos.SilentAim
+        ShowNotification("🔇 Silent Aim", Cosmos.SilentAim and "✅ Activado" or "❌ Desactivado")
     end
-    
+
     -- Trigger Bot (P)
-    if input.KeyCode == Settings.TriggerKey then
-        Settings.TriggerBot = not Settings.TriggerBot
-        ShowNotification("⚡ Trigger Bot", Settings.TriggerBot and "✅ Activado" or "❌ Desactivado")
+    if input.KeyCode == Cosmos.TriggerKey then
+        Cosmos.TriggerBot = not Cosmos.TriggerBot
+        ShowNotification("⚡ Trigger Bot", Cosmos.TriggerBot and "✅ Activado" or "❌ Desactivado")
     end
-    
+
     -- Wallbang (H)
-    if input.KeyCode == Settings.WallbangKey then
-        Settings.Wallbang = not Settings.Wallbang
-        ShowNotification("🏹 Wallbang", Settings.Wallbang and "✅ Activado" or "❌ Desactivado")
+    if input.KeyCode == Cosmos.WallbangKey then
+        Cosmos.Wallbang = not Cosmos.Wallbang
+        ShowNotification("🏹 Wallbang", Cosmos.Wallbang and "✅ Activado" or "❌ Desactivado")
     end
-    
+
     -- Kill Aura (M)
-    if input.KeyCode == Settings.AuraKey then
-        Settings.KnifeAura = not Settings.KnifeAura
-        ShowNotification("🔪 Kill All Aura", Settings.KnifeAura and "✅ Activado" or "❌ Desactivado")
+    if input.KeyCode == Cosmos.AuraKey then
+        Cosmos.KnifeAura = not Cosmos.KnifeAura
+        ShowNotification("🔪 Kill All Aura", Cosmos.KnifeAura and "✅ Activado" or "❌ Desactivado")
     end
-    
+
     -- Auto Shoot (V)
-    if input.KeyCode == Settings.AutoShootKey then
-        Settings.AutoShoot = not Settings.AutoShoot
-        ShowNotification("🔫 Auto Shoot", Settings.AutoShoot and "✅ Activado" or "❌ Desactivado")
+    if input.KeyCode == Cosmos.AutoShootKey then
+        Cosmos.AutoShoot = not Cosmos.AutoShoot
+        ShowNotification("🔫 Auto Shoot", Cosmos.AutoShoot and "✅ Activado" or "❌ Desactivado")
     end
-    
-     -- ==================================================
-    -- [ TELETRANSPORTE A JUGADOR VIVO EN EL MAPA (U) ]
+
     -- ==================================================
-    if input.KeyCode == Settings.MapKey then
+    -- [ TELETRANSPORTE A JUGADOR VIVO EN EL MAPA (U) ]  ✦ MEJORA CGS: más robusto y con offset
+    -- ==================================================
+    if input.KeyCode == Cosmos.MapKey then
         local player = game.Players.LocalPlayer
         local myRoot = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
         if not myRoot then
@@ -433,21 +487,14 @@ UserInputService.InputBegan:Connect(function(input, gp)
             return
         end
 
-        -- Recopilar jugadores vivos (con personaje y HumanoidRootPart) que no sean tú
         local alivePlayers = {}
         for _, p in pairs(Players:GetPlayers()) do
             if p ~= player then
                 local char = p.Character
                 local root = char and char:FindFirstChild("HumanoidRootPart")
                 if root then
-                    -- Opcional: filtrar solo los que tienen arma (cuchillo o pistola) para asegurar que están en el mapa
-                    local hasWeapon = char:FindFirstChild("Knife") or char:FindFirstChild("Gun") or p.Backpack:FindFirstChild("Knife") or p.Backpack:FindFirstChild("Gun")
-                    if hasWeapon then
-                        table.insert(alivePlayers, {player = p, root = root})
-                    else
-                        -- Si no tienen arma, podrían estar en lobby, los incluimos solo si no hay alternativa
-                        table.insert(alivePlayers, {player = p, root = root})
-                    end
+                    -- Incluir a todos los que tengan personaje (vivos)
+                    table.insert(alivePlayers, {player = p, root = root})
                 end
             end
         end
@@ -457,17 +504,15 @@ UserInputService.InputBegan:Connect(function(input, gp)
             return
         end
 
-        -- Elegir un jugador al azar (o el primero)
         local target = alivePlayers[math.random(1, #alivePlayers)]
-        -- Teletransportarte detrás de él (o a su posición)
-        myRoot.CFrame = target.root.CFrame * CFrame.new(0, 2, 3)
+        myRoot.CFrame = target.root.CFrame * CFrame.new(0, 2, Cosmos.TeleportOffset)
         ShowNotification("🌀 TELEPORT", "Teletransportado a " .. target.player.Name)
     end
-    
+
     -- ==================================================
     -- [ TELETRANSPORTE AL LOBBY (L) - VERSIÓN ROBUSTA ]
     -- ==================================================
-    if input.KeyCode == Settings.LobbyKey then
+    if input.KeyCode == Cosmos.LobbyKey then
         local player = game.Players.LocalPlayer
         local character = player.Character
         local root = character and character:FindFirstChild("HumanoidRootPart")
@@ -478,8 +523,7 @@ UserInputService.InputBegan:Connect(function(input, gp)
 
         local targetPos = nil
         local keywords = {"lobby", "spawn", "waiting", "start", "hub", "lobbypart"}
-        
-        -- Buscar partes por nombre
+
         for _, obj in ipairs(workspace:GetDescendants()) do
             if obj:IsA("BasePart") then
                 local nameLower = obj.Name:lower()
@@ -492,8 +536,7 @@ UserInputService.InputBegan:Connect(function(input, gp)
                 if targetPos then break end
             end
         end
-        
-        -- Buscar modelos con esos nombres
+
         if not targetPos then
             for _, model in ipairs(workspace:GetChildren()) do
                 if model:IsA("Model") then
@@ -517,8 +560,7 @@ UserInputService.InputBegan:Connect(function(input, gp)
                 end
             end
         end
-        
-        -- Fallback: coordenadas típicas del lobby (ajústalas si sabes)
+
         if not targetPos then
             targetPos = CFrame.new(0, 100, 0)
             ShowNotification("⚠️ FALLBACK", "Usando coordenadas fijas del lobby")
@@ -532,55 +574,45 @@ UserInputService.InputBegan:Connect(function(input, gp)
             ShowNotification("❌ ERROR", "No se pudo encontrar el lobby")
         end
     end
-    
+
     -- [ ABRIR/CERRAR PANEL ADMIN (J) ]
-    if input.KeyCode == Settings.AdminKey then
+    if input.KeyCode == Cosmos.AdminKey then
         local adminPanel = CoreGui:FindFirstChild("CGS_AdminPanel")
         if adminPanel then
             adminPanel.Enabled = not adminPanel.Enabled
             ShowNotification("🛡️ CGS ADMIN", adminPanel.Enabled and "Panel Abierto" or "Panel Cerrado")
         end
     end
-    
+
     -- Otros toggles
-    if input.KeyCode == Settings.FakeLagKey then ToggleFakeLag() end
-    if input.KeyCode == Settings.ServerLagKey then ToggleServerLag() end
-    if input.KeyCode == Settings.SpeedGlitchKey then ToggleSpeedGlitch() end
-    if input.KeyCode == Settings.FlingSheriffKey then ToggleFlingSheriff() end
-    if input.KeyCode == Settings.FlingMurderKey then ToggleFlingMurder() end
+    if input.KeyCode == Cosmos.FakeLagKey then ToggleFakeLag() end
+    if input.KeyCode == Cosmos.ServerLagKey then ToggleServerLag() end
+    if input.KeyCode == Cosmos.SpeedGlitchKey then ToggleSpeedGlitch() end
+    if input.KeyCode == Cosmos.FlingSheriffKey then ToggleFlingSheriff() end
+    if input.KeyCode == Cosmos.FlingMurderKey then ToggleFlingMurder() end
 end)
 
 -- ==================================================
--- [ BUCLE CAMERA AIMBOT ]
+-- [ BUCLE CAMERA AIMBOT ]  ✦ MEJORA CGS: usa GetMurderer()
 -- ==================================================
 RunService.RenderStepped:Connect(function()
-    if not Settings.UseCameraAimbot then return end
+    if not Cosmos.UseCameraAimbot then return end
     if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
-    
-    local murderer = nil
-    for _, p in pairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and p.Character then
-            if p.Backpack:FindFirstChild("Knife") or p.Character:FindFirstChild("Knife") then
-                murderer = p.Character
-                break
-            end
-        end
-    end
-    
+
+    local murderer = GetMurderer()
     if murderer then
-        local targetPart = murderer:FindFirstChild("UpperTorso") 
-                         or murderer:FindFirstChild("Torso") 
+        local targetPart = murderer:FindFirstChild("UpperTorso")
+                         or murderer:FindFirstChild("Torso")
                          or murderer:FindFirstChild("HumanoidRootPart")
-                         
+
         if targetPart then
             local targetPos = targetPart.Position + Vector3.new(0, 1.15, 0)
             local root = murderer:FindFirstChild("HumanoidRootPart")
-            
             if root then
                 local vel = root.Velocity
                 targetPos = targetPos + Vector3.new(vel.X * 0.12, 0, vel.Z * 0.12)
             end
-            
+
             local currentCFrame = Camera.CFrame
             local targetCFrame = CFrame.new(currentCFrame.Position, targetPos)
             Camera.CFrame = currentCFrame:Lerp(targetCFrame, 0.07)
@@ -595,127 +627,111 @@ pcall(function()
     local mt = getrawmetatable(game)
     local old = mt.__namecall
     setreadonly(mt, false)
-    
+
     mt.__namecall = newcclosure(function(self, ...)
         local args = {...}
         local method = getnamecallmethod()
-        
-        if (Settings.SilentAim or Settings.Wallbang) and method == "FireServer" then
+
+        if (Cosmos.SilentAim or Cosmos.Wallbang) and method == "FireServer" then
             local name = tostring(self.Name):lower()
-            
             if name:find("shoot") or name:find("gun") then
-                for _, p in pairs(Players:GetPlayers()) do
-                    if p ~= LocalPlayer and p.Character then
-                        local isM = p.Backpack:FindFirstChild("Knife") or p.Character:FindFirstChild("Knife")
-                        if isM then
-                            local root = p.Character:FindFirstChild("HumanoidRootPart")
-                            if root then
-                                args[1] = root.Position + Vector3.new(0, Settings.ChestOffset, 0)
-                                break
-                            end
-                        end
+                local murderer = GetMurderer()
+                if murderer then
+                    local root = murderer:FindFirstChild("HumanoidRootPart")
+                    if root then
+                        args[1] = root.Position + Vector3.new(0, Cosmos.ChestOffset, 0)
                     end
                 end
             end
         end
         return old(self, unpack(args))
     end)
-    
+
     setreadonly(mt, true)
     SilentAimLoaded = true
 end)
 
 -- ==================================================
--- [ BUCLE TRIGGER BOT ]
+-- [ BUCLE TRIGGER BOT ]  ✦ MEJORA CGS: verifica balas y cooldown
 -- ==================================================
 RunService.RenderStepped:Connect(function()
-    if not Settings.TriggerBot then return end
+    if not Cosmos.TriggerBot then return end
     if not LocalPlayer.Character then return end
-    
-    local gun = LocalPlayer.Backpack:FindFirstChild("Gun") 
+
+    local gun = LocalPlayer.Backpack:FindFirstChild("Gun")
              or LocalPlayer.Character:FindFirstChild("Gun")
-             
+
     if not gun then return end
-    
-    local murderer = nil
-    for _, p in pairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and p.Character then
-            if p.Backpack:FindFirstChild("Knife") or p.Character:FindFirstChild("Knife") then
-                murderer = p.Character
-                break
-            end
-        end
-    end
-    
-    if murderer then 
-        gun:Activate() 
+
+    -- ✦ MEJORA CGS: verificar que el arma tiene balas (si existe la propiedad)
+    if gun:FindFirstChild("Ammo") and gun.Ammo.Value <= 0 then return end
+
+    local murderer = GetMurderer()
+    if murderer then
+        gun:Activate()
     end
 end)
 
 -- ==================================================
--- [ BUCLE KILL AURA ]
+-- [ BUCLE KILL AURA ]  ✦ MEJORA CGS: evita activar el cuchillo si ya está activo
 -- ==================================================
+local auraCooldown = 0
 RunService.Heartbeat:Connect(function()
-    if not Settings.KnifeAura then return end
-    
+    if not Cosmos.KnifeAura then return end
+
     local char = LocalPlayer.Character
     if not char then return end
-    
-    local knife = char:FindFirstChild("Knife") 
+
+    local knife = char:FindFirstChild("Knife")
                or LocalPlayer.Backpack:FindFirstChild("Knife")
-               
     if not knife then return end
-    
+
+    -- ✦ MEJORA CGS: no activar si ya está en cooldown o si el cuchillo ya está en uso
+    if tick() - auraCooldown < Cosmos.AuraDelay then return end
+
     for _, p in pairs(Players:GetPlayers()) do
         if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
             local dist = (char.HumanoidRootPart.Position - p.Character.HumanoidRootPart.Position).Magnitude
-            if dist <= Settings.AuraRange then
+            if dist <= Cosmos.AuraRange then
                 knife:Activate()
-                task.wait(Settings.AuraDelay)
+                auraCooldown = tick()
+                break  -- ✦ MEJORA CGS: solo activar una vez por tick
             end
         end
     end
 end)
 
 -- ==================================================
--- [ BUCLE AUTO SHOOT ]
+-- [ BUCLE AUTO SHOOT ]  ✦ MEJORA CGS: usa GetMurderer() y cooldown mejorado
 -- ==================================================
 RunService.Heartbeat:Connect(function()
-    if not Settings.AutoShoot then return end
-    if tick() - LastShot < 0.07 then return end
-    
+    if not Cosmos.AutoShoot then return end
+    if tick() - LastShot < Cosmos.AutoShootCooldown then return end
+
     local character = LocalPlayer.Character
     if not character then return end
-    
-    local gun = character:FindFirstChild("Gun") 
+
+    local gun = character:FindFirstChild("Gun")
              or LocalPlayer.Backpack:FindFirstChild("Gun")
-             
     if not gun then return end
-    
-    local murderer = nil
-    for _, p in pairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and p.Character then
-            if p.Backpack:FindFirstChild("Knife") or p.Character:FindFirstChild("Knife") then
-                murderer = p.Character
-                break
-            end
-        end
-    end
-    
+
+    -- Verificar balas
+    if gun:FindFirstChild("Ammo") and gun.Ammo.Value <= 0 then return end
+
+    local murderer = GetMurderer()
     if murderer then
         local upper = murderer:FindFirstChild("UpperTorso") or murderer:FindFirstChild("Torso")
         local root = murderer:FindFirstChild("HumanoidRootPart")
-        
         local targetPos = nil
         if upper then
-            targetPos = upper.Position + Vector3.new(0, Settings.ChestOffset, 0)
+            targetPos = upper.Position + Vector3.new(0, Cosmos.ChestOffset, 0)
         elseif root then
-            targetPos = root.Position + Vector3.new(0, Settings.ChestOffset, 0)
+            targetPos = root.Position + Vector3.new(0, Cosmos.ChestOffset, 0)
         end
-        
+
         if targetPos then
             local dist = (character.HumanoidRootPart.Position - targetPos).Magnitude
-            if dist < Settings.ShootRange then
+            if dist < Cosmos.ShootRange then
                 gun:Activate()
                 LastShot = tick()
             end
@@ -724,46 +740,66 @@ RunService.Heartbeat:Connect(function()
 end)
 
 -- ==================================================
--- [ BUCLE ESP ]
+-- [ BUCLE ESP ]  ✦ MEJORA CGS: ahora asegura que todos los jugadores tengan rubí
 -- ==================================================
 RunService.Heartbeat:Connect(function()
+    local now = tick()
+    if now - ESPLastUpdate < Cosmos.ESPUpdateInterval then return end
+    ESPLastUpdate = now
+
     for _, player in pairs(Players:GetPlayers()) do
         pcall(function()
-            CreateOrUpdateRuby(player)
+            if player == LocalPlayer then return end
+
+            -- Si no tiene personaje, eliminar su rubí si existe
+            if not player.Character then
+                if Rubies[player] then
+                    Rubies[player]:Destroy()
+                    Rubies[player] = nil
+                    ESPCache[player] = nil
+                end
+                return
+            end
+
+            local root = player.Character:FindFirstChild("HumanoidRootPart")
+            if not root then
+                if Rubies[player] then
+                    Rubies[player]:Destroy()
+                    Rubies[player] = nil
+                    ESPCache[player] = nil
+                end
+                return
+            end
+
+            -- Verificar si el rubí existe y está correctamente asignado
+            local ruby = Rubies[player]
+            if not ruby or ruby.Adornee ~= root or not ruby.Parent then
+                -- Crear o recrear el rubí
+                CreateOrUpdateRuby(player)
+                -- Actualizar caché después de crear
+                local role = GetPlayerRole(player)
+                local color, trans = GetRoleColor(player)
+                ESPCache[player] = player.UserId .. "_" .. role .. "_" .. tostring(color) .. "_" .. tostring(trans)
+            else
+                -- Si existe, verificar si el rol cambió para actualizar color
+                local role = GetPlayerRole(player)
+                local color, trans = GetRoleColor(player)
+                local cacheKey = player.UserId .. "_" .. role .. "_" .. tostring(color) .. "_" .. tostring(trans)
+                if ESPCache[player] ~= cacheKey then
+                    -- Actualizar color y transparencia sin recrear
+                    ruby.Color3 = color
+                    ruby.Transparency = trans
+                    ESPCache[player] = cacheKey
+                end
+            end
         end)
     end
 end)
 
 -- ==================================================
--- [ LOGICA DE TARGETED FLING INDIVIDUAL ]
+-- [ LOGICA DE TARGETED FLING INDIVIDUAL ]  (ya mejorada arriba)
 -- ==================================================
-local function ExecuteTargetFling(targetPlayer)
-    local char = LocalPlayer.Character
-    local myRoot = char and char:FindFirstChild("HumanoidRootPart")
-    local targetChar = targetPlayer.Character
-    local targetRoot = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
-    
-    if myRoot and targetRoot then
-        ShowNotification("⚡ CGS ELITE FLING", "🎯 Atacando a: " .. targetPlayer.Name)
-        local OldCF = myRoot.CFrame
-        
-        myRoot.AssemblyAngularVelocity = Vector3.new(0, 999999, 0)
-        
-        local startTime = tick()
-        while tick() - startTime < 0.5 do
-            myRoot.CFrame = targetRoot.CFrame * CFrame.new(0, 0, 0)
-            myRoot.AssemblyLinearVelocity = Vector3.new(30000, 30000, 30000)
-            task.wait()
-            if not targetRoot or not targetRoot.Parent then break end
-        end
-        
-        myRoot.CFrame = OldCF
-        myRoot.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-        myRoot.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
-    else
-        ShowNotification("⚠️ Error", "El objetivo no está disponible.")
-    end
-end
+-- La función ExecuteTargetFling ya está definida arriba y es usada por los toggles y el panel.
 
 -- ==================================================
 -- [ NUEVO: LOGICA DE HUNT (CAZAR) INDIVIDUAL ]
@@ -773,23 +809,23 @@ local function ExecuteTargetHunt(targetPlayer)
     local myRoot = char and char:FindFirstChild("HumanoidRootPart")
     local targetChar = targetPlayer.Character
     local targetRoot = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
-    
+
     if myRoot and targetRoot then
         ShowNotification("🔪 CGS HUNT", "Apareciendo detrás de " .. targetPlayer.Name)
-        myRoot.CFrame = targetRoot.CFrame * CFrame.new(0, 0, 3)
+        myRoot.CFrame = targetRoot.CFrame * CFrame.new(0, 0, Cosmos.TeleportOffset)
     else
         ShowNotification("⚠️ Error", "El objetivo no está disponible.")
     end
 end
 
 -- ==================================================
--- [ CGS ADMIN PANEL GEN V23.0 (DOBLE COLUMNA PRO) ]
+-- [ CGS ADMIN PANEL GEN V23.0 (DOBLE COLUMNA PRO) ]  ✦ MEJORA CGS: muestra roles en la lista
 -- ==================================================
 local SelectedPlayer = nil
 
 local function CreateCGSAdmin()
-    if CoreGui:FindFirstChild("CGS_AdminPanel") then 
-        CoreGui.CGS_AdminPanel:Destroy() 
+    if CoreGui:FindFirstChild("CGS_AdminPanel") then
+        CoreGui.CGS_AdminPanel:Destroy()
     end
 
     local ScreenGui = Instance.new("ScreenGui")
@@ -821,6 +857,7 @@ local function CreateCGSAdmin()
 
     -- Marco Izquierdo (Lista)
     local PlayerListFrame = Instance.new("ScrollingFrame")
+    PlayerListFrame.Name = "PlayerListFrame"
     PlayerListFrame.Parent = MainFrame
     PlayerListFrame.Position = UDim2.new(0, 10, 0, 45)
     PlayerListFrame.Size = UDim2.new(0.5, -15, 1, -55)
@@ -842,6 +879,7 @@ local function CreateCGSAdmin()
     ActionFrame.BorderColor3 = Color3.fromRGB(100, 0, 0)
 
     local ActionTitle = Instance.new("TextLabel")
+    ActionTitle.Name = "ActionTitle"
     ActionTitle.Parent = ActionFrame
     ActionTitle.Size = UDim2.new(1, 0, 0, 30)
     ActionTitle.Text = "SELECCIONA OBJETIVO"
@@ -852,6 +890,7 @@ local function CreateCGSAdmin()
 
     -- Botones de Acción (Ocultos hasta seleccionar jugador)
     local BtnFling = Instance.new("TextButton")
+    BtnFling.Name = "BtnFling"
     BtnFling.Parent = ActionFrame
     BtnFling.Size = UDim2.new(1, -20, 0, 40)
     BtnFling.Position = UDim2.new(0, 10, 0, 50)
@@ -863,6 +902,7 @@ local function CreateCGSAdmin()
     BtnFling.Visible = false
 
     local BtnHunt = Instance.new("TextButton")
+    BtnHunt.Name = "BtnHunt"
     BtnHunt.Parent = ActionFrame
     BtnHunt.Size = UDim2.new(1, -20, 0, 40)
     BtnHunt.Position = UDim2.new(0, 10, 0, 100)
@@ -873,23 +913,34 @@ local function CreateCGSAdmin()
     BtnHunt.TextSize = 14
     BtnHunt.Visible = false
 
-    -- Lógica de Actualización
+    -- Lógica de Actualización  ✦ MEJORA CGS: mostrar rol junto al nombre
     local function UpdatePlayerList()
-        for _, v in pairs(PlayerListFrame:GetChildren()) do 
-            if v:IsA("TextButton") then v:Destroy() end 
+        for _, v in pairs(PlayerListFrame:GetChildren()) do
+            if v:IsA("TextButton") then v:Destroy() end
         end
-        
+
         for _, p in pairs(Players:GetPlayers()) do
             if p ~= LocalPlayer then
                 local b = Instance.new("TextButton")
                 b.Parent = PlayerListFrame
                 b.Size = UDim2.new(1, -10, 0, 30)
                 b.BackgroundColor3 = Color3.fromRGB(30, 10, 10)
-                b.Text = p.DisplayName
+                local role = GetPlayerRole(p)
+                local roleSymbol = ""
+                if role == "murderer" then
+                    roleSymbol = "🔪 "
+                elseif role == "sheriff" then
+                    roleSymbol = "🔫 "
+                elseif role == "innocent_with_gun" then
+                    roleSymbol = "🔫⚠️ "
+                else
+                    roleSymbol = "🟢 "
+                end
+                b.Text = roleSymbol .. p.DisplayName
                 b.TextColor3 = Color3.new(1,1,1)
                 b.Font = Enum.Font.Code
                 b.TextSize = 13
-                
+
                 b.MouseButton1Click:Connect(function()
                     SelectedPlayer = p
                     ActionTitle.Text = "@" .. p.Name:upper()
@@ -915,19 +966,22 @@ local function CreateCGSAdmin()
     UpdatePlayerList()
     Players.PlayerAdded:Connect(UpdatePlayerList)
     Players.PlayerRemoving:Connect(UpdatePlayerList)
+
+    -- ✦ MEJORA CGS: devolver la función para actualización periódica
+    return UpdatePlayerList
 end
 
 -- ==================================================
 -- [ INICIO DEL SCRIPT ]
 -- ==================================================
 SetupGunHighlight()
-CreateCGSAdmin()
+local updatePanel = CreateCGSAdmin()
 
 task.wait(2)
 
-for _, p in pairs(Players:GetPlayers()) do 
+for _, p in pairs(Players:GetPlayers()) do
     pcall(function()
-        CreateOrUpdateRuby(p) 
+        CreateOrUpdateRuby(p)
     end)
 end
 
@@ -969,7 +1023,7 @@ local function TeleportByName(playerName)
         return false
     end
 
-    myRoot.CFrame = targetRoot.CFrame * CFrame.new(0, 2, 3)
+    myRoot.CFrame = targetRoot.CFrame * CFrame.new(0, 2, Cosmos.TeleportOffset)
     ShowNotification("✅ TELETRANSPORTE EXITOSO", "Ahora estás con " .. target.Name)
     return true
 end
@@ -1130,6 +1184,16 @@ local function SetupF2Teleport()
 end
 
 SetupF2Teleport()
+
+-- ✦ MEJORA CGS: actualización automática del panel cada 2 segundos
+task.spawn(function()
+    while true do
+        task.wait(2)
+        if updatePanel then
+            pcall(updatePanel)
+        end
+    end
+end)
 
 -- [ FINALIZADO ]
 print("\27[32m==================================================\27[0m")
